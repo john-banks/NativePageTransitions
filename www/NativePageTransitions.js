@@ -11,13 +11,53 @@ NativePageTransitions.prototype.globalOptions =  {
   fixedPixelsBottom: 0  // currently for slide left/right only
 };
 
+NativePageTransitions.prototype.globalOptions =  {
+  duration: 400,
+  iosdelay: 60, // a number of milliseconds, or -1 (call executePendingTransition() when ready)
+  androiddelay: 70, // a number of milliseconds, or -1 (call executePendingTransition() when ready)
+  winphonedelay: 200,
+  slowdownfactor: 4,
+  fixedPixelsTop: 0,    // currently for slide left/right only
+  fixedPixelsBottom: 0  // currently for slide left/right only
+};
+
+
+
+NativePageTransitions.prototype._cordovaExec = function (onSuccess, onError, pluginName, transitionType, options) {
+    var self = this;
+    var opts = options.length === 1 ? options[0] : {};
+    if(opts.iosdelay === -1 && this.inTransition){
+        return;
+    }
+    self.inTransition = true;
+    document.body.style['pointer-events'] = 'none';
+    function transitionSuccess(args){
+        if(opts.iosdelay !== -1){
+            self.inTransition = false;
+            document.body.style['pointer-events'] = 'auto';
+        }
+        if(typeof onSuccess === 'function'){
+            onSuccess.apply(this,arguments);
+        }
+    }
+    function transitionError(args){
+        self.inTransition = false;
+        document.body.style['pointer-events'] = 'auto';
+        if(typeof onError === 'function'){
+            onError.apply(this,arguments);
+        }
+    }
+    cordova.exec(transitionSuccess, transitionError, pluginName, transitionType, [opts]);
+};
+
 NativePageTransitions.prototype.executePendingTransition = function (onSuccess, onError) {
-  cordova.exec(onSuccess, onError, "NativePageTransitions", "executePendingTransition", []);
+  this._cordovaExec(onSuccess, onError, "NativePageTransitions", "executePendingTransition", []);
 };
 
 NativePageTransitions.prototype.cancelPendingTransition = function (onSuccess, onError) {
-  cordova.exec(onSuccess, onError, "NativePageTransitions", "cancelPendingTransition", []);
+  this._cordovaExec(onSuccess, onError, "NativePageTransitions", "cancelPendingTransition", []);
 };
+
 
 NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
   var opts = options || {};
@@ -45,7 +85,7 @@ NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
   }
   // setting slowdownfactor > 1 makes the next page slide less pixels. Use 1 for side-by-side.
   opts.slowdownfactor = opts.slowdownfactor || this.globalOptions.slowdownfactor;
-  cordova.exec(onSuccess, onError, "NativePageTransitions", "slide", [opts]);
+  this._cordovaExec(onSuccess, onError, "NativePageTransitions", "slide", [opts]);
 };
 
 NativePageTransitions.prototype.drawer = function (options, onSuccess, onError) {
@@ -67,7 +107,7 @@ NativePageTransitions.prototype.drawer = function (options, onSuccess, onError) 
   if (opts.winphonedelay == undefined || opts.winphonedelay == "null") {
     opts.winphonedelay = this.globalOptions.winphonedelay;
   }
-  cordova.exec(onSuccess, onError, "NativePageTransitions", "drawer", [opts]);
+  this._cordovaExec(onSuccess, onError, "NativePageTransitions", "drawer", [opts]);
 };
 
 NativePageTransitions.prototype.flip = function (options, onSuccess, onError) {
@@ -88,7 +128,7 @@ NativePageTransitions.prototype.flip = function (options, onSuccess, onError) {
   if (opts.winphonedelay == undefined || opts.winphonedelay == "null") {
     opts.winphonedelay = this.globalOptions.winphonedelay;
   }
-  cordova.exec(onSuccess, onError, "NativePageTransitions", "flip", [opts]);
+  this._cordovaExec(onSuccess, onError, "NativePageTransitions", "flip", [opts]);
 };
 
 NativePageTransitions.prototype.curl = function (options, onSuccess, onError) {
@@ -103,7 +143,7 @@ NativePageTransitions.prototype.curl = function (options, onSuccess, onError) {
   if (opts.iosdelay == undefined || opts.iosdelay == "null") {
     opts.iosdelay = this.globalOptions.iosdelay;
   }
-  cordova.exec(onSuccess, onError, "NativePageTransitions", "curl", [opts]);
+  this._cordovaExec(onSuccess, onError, "NativePageTransitions", "curl", [opts]);
 };
 
 NativePageTransitions.prototype.fade = function (options, onSuccess, onError) {
@@ -120,7 +160,7 @@ NativePageTransitions.prototype.fade = function (options, onSuccess, onError) {
   if (opts.iosdelay == undefined || opts.iosdelay == "null") {
     opts.iosdelay = this.globalOptions.iosdelay;
   }
-  cordova.exec(onSuccess, onError, "NativePageTransitions", "fade", [opts]);
+  this._cordovaExec(onSuccess, onError, "NativePageTransitions", "fade", [opts]);
 };
 
 NativePageTransitions.prototype._validateHref = function (href, errCallback) {
